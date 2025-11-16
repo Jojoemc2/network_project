@@ -17,6 +17,14 @@ const { username } = Qs.parse(location.search, {
     ignoreQueryPrefix: true
 });
 
+// Check if user is authenticated
+const currentUser = localStorage.getItem('currentUser');
+if (!username || !currentUser || username !== currentUser) {
+    // Not authenticated or username mismatch - redirect to login
+    alert('Please login first');
+    window.location.href = 'index.html';
+}
+
 
 // Listen for chat history
 socket.on('chatHistory', (messages) => {
@@ -215,6 +223,20 @@ socket.on('joinSuccess', (joinedUsername) => {
 socket.on('joinError', (errorMessage) => {
     console.error(errorMessage);
 });
+
+// Handle logout button click
+const logoutBtn = document.querySelector('.chat-header .btn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Clear localStorage
+        localStorage.removeItem('currentUser');
+        // Disconnect socket
+        socket.disconnect();
+        // Redirect to login
+        window.location.href = 'index.html';
+    });
+}
 
 // request to join the lobby
 socket.emit('joinLobby', { username });
