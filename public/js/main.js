@@ -78,7 +78,6 @@ createRoomForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const newRoomName = createRoomInput.value;
     if (newRoomName) {
-        chatMessages.innerHTML = '';
         socket.emit('createRoom', newRoomName); 
     }
 });
