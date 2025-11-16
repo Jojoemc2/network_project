@@ -7,6 +7,6 @@ const UserSchema = new mongoose.Schema({
   socketId: { type: String, default: null },
   room: { type: String, default: 'Lobby' },
   online: { type: Boolean, default: true },
-  lastSeen: { type: String, default: moment().format('HH:mm') }
+  lastSeen: { type: String, default: moment().add(7, 'hours').format('HH:mm') }
 });
 module.exports = mongoose.model('User', UserSchema);

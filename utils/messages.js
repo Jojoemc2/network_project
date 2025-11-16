@@ -3,7 +3,7 @@ function formatMessage(username, text){
     return {
         username,
         text,
-        time: moment().format('HH:mm')
+        time: moment().add(7, 'hours').format('HH:mm')
     }
 }
 module.exports = formatMessage;
