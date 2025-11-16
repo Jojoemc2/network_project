@@ -3,6 +3,10 @@ const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
 const formatMessage = require('./utils/messages');
+const connectDB = require('./utils/db');
+const Message = require('./models/Message');
+const User = require('./models/User');
+const Room = require('./models/Room');
 const {
     userJoin,
     getCurrentUser,
@@ -16,6 +20,14 @@ const {
     userChangeRoom // --- Make sure this is imported ---
 } = require('./utils/user');
 
+require('dotenv').config();
+connectDB(process.env.MONGO_URI).catch(err => 
+    { 
+        console.error(err); 
+        process.exit(1); 
+    }
+);
+
 const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
@@ -25,11 +37,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const botname = 'ChatCord Bot';
 // --- ADDED: Store for chat history ---
-const chatHistory = {}; // { roomName: [message1, message2] }
+// const chatHistory = {}; // { roomName: [message1, message2] }
 
 // --- Helper function to broadcast updated room list ---
-function broadcastRoomList(socket) {
-    const roomData = getRoomData();
+async function broadcastRoomList(socket) {
+    const roomData = await getRoomData();
     io.emit('roomListUpdate', roomData);
 }
 
@@ -37,21 +49,25 @@ function broadcastRoomList(socket) {
 io.on('connection', socket => {
 
     // Handles user validation and joining the lobby
-    socket.on('joinLobby', ({ username }) => {
-        const existingUser = getUserByUsername(username); 
+    socket.on('joinLobby', async ({ username }) => {
+        const existingUser = await getUserByUsername(username); 
         if (existingUser) {
             socket.emit('joinError', 'This username is already taken. Please choose another.');
             return;
         }
         
-        const user = userJoin(socket.id, username, 'Lobby');
+        const user = await userJoin(socket.id, username, 'Lobby');
         socket.join(user.room);
         socket.emit('joinSuccess', user.username);
 
-        // --- ADDED: Send chat history for the lobby ---
-        if (chatHistory[user.room]) {
-            socket.emit('chatHistory', chatHistory[user.room]);
-        }
+        // Fetch recent history (last 30 messages)
+        const history = await Message.find({ room: user.room }).sort({ createdAt: 1 }).limit(30).lean();
+        socket.emit('chatHistory', history.map(m => ({
+            username: m.username,
+            text: m.text,
+            time: formatTime(m.createdAt), // use your formatMessage/time formatter
+            type: m.type
+        })));
 
         socket.emit('message', formatMessage(botname, 'Welcome to the ChatCord Lobby!'));
         socket.broadcast
@@ -59,21 +75,21 @@ io.on('connection', socket => {
             .emit('message', formatMessage(botname, `${user.username} has joined the lobby`));
         io.to(user.room).emit('roomUsers', {
             room: user.room,
-            users: getRoomUsers(user.room)
+            users: await getRoomUsers(user.room)
         });
-        io.emit('allUsers', getAllUsers());
-        broadcastRoomList(socket);
+        io.emit('allUsers', await getAllUsers());
+        await broadcastRoomList(socket);
     });
 
     // Listen for new room creation
-    socket.on('createRoom', (roomName) => {
-        addRoom(roomName);
-        broadcastRoomList(socket);
+    socket.on('createRoom', async (roomName) => {
+        await addRoom(roomName);
+        await broadcastRoomList(socket);
     });
     
     // --- MODIFIED: Listen for user joining a different room ---
-    socket.on('joinRoom', (roomName) => {
-        const user = getCurrentUser(socket.id);
+    socket.on('joinRoom', async (roomName) => {
+        const user = await getCurrentUser(socket.id);
         if (!user) return; 
 
         const oldRoom = user.room;
@@ -82,17 +98,21 @@ io.on('connection', socket => {
             io.to(oldRoom).emit('message', formatMessage(botname, `${user.username} has left this room`));
             io.to(oldRoom).emit('roomUsers', {
                 room: oldRoom,
-                users: getRoomUsers(oldRoom)
+                users: await getRoomUsers(oldRoom)
             });
         }
         
-        userChangeRoom(socket.id, roomName);
+        await userChangeRoom(socket.id, roomName);
         socket.join(roomName);
         
-        // --- ADDED: Send chat history for the new room ---
-        if (chatHistory[roomName]) {
-            socket.emit('chatHistory', chatHistory[roomName]);
-        }
+        // Fetch recent history (last 30 messages)
+        const history = await Message.find({ room: user.room }).sort({ createdAt: 1 }).limit(30).lean();
+        socket.emit('chatHistory', history.map(m => ({
+            username: m.username,
+            text: m.text,
+            time: formatTime(m.createdAt), // use your formatMessage/time formatter
+            type: m.type
+        })));
         
         socket.emit('message', formatMessage(botname, `Welcome to ${roomName}!`));
         socket.broadcast
@@ -100,59 +120,49 @@ io.on('connection', socket => {
             .emit('message', formatMessage(botname, `${user.username} has joined the chat`));
         io.to(roomName).emit('roomUsers', {
             room: roomName,
-            users: getRoomUsers(roomName)
+            users: await getRoomUsers(roomName)
         });
-        broadcastRoomList(socket);
+        await broadcastRoomList(socket);
     });
 
     // --- MODIFIED: Listen for chatMessage ---
-    socket.on('chatMessage', (msg) => {
-        const user = getCurrentUser(socket.id);
+    socket.on('chatMessage', async (msg) => {
+        const user = await getCurrentUser(socket.id);
         if (user) {
+            const type = user.room.startsWith('dm-') ? 'dm' : 'public';
+            const messageDoc = await Message.create({
+                room: user.room,
+                username: user.username,
+                text: msg,
+                type: type
+            });
             const formattedMsg = formatMessage(user.username, msg);
-            
-            // --- ADDED: Store message in history ---
-            if (!chatHistory[user.room]) {
-                chatHistory[user.room] = [];
-            }
-            // Add a type hint for DMs
-            if (user.room.startsWith('dm-')) {
-                formattedMsg.type = 'dm';
-            }
-            chatHistory[user.room].push(formattedMsg);
-
-            // --- ADDED: DM Notification Logic ---
-            if (user.room.startsWith('dm-')) {
-                // Find the other user in the DM room
-                const names = user.room.split('-').slice(1);
-                const recipientName = names.find(name => name !== user.username);
-                const recipient = getUserByUsername(recipientName);
-
-                // If recipient exists but is NOT in this room, send a notification
-                if (recipient && recipient.room !== user.room) {
-                    io.to(recipient.id).emit('dmNotification', {
-                        fromUsername: user.username,
-                        roomName: user.room
-                    });
-                }
-            }
-            
-            // Send the message to everyone in the room
+            if (type === 'dm') formattedMsg.type = 'dm';
             io.to(user.room).emit('message', formattedMsg);
+
+            // DM notify
+            if (type === 'dm') {
+            const names = user.room.split('-').slice(1);
+            const recipientName = names.find(name => name !== user.username);
+            const recipient = await getUserByUsername(recipientName);
+            if (recipient && recipient.socketId && recipient.room !== user.room) {
+                io.to(recipient.socketId).emit('dmNotification', { fromUsername: user.username, roomName: user.room });
+            }
+            }
         }
     });
 
     // --- (Disconnect logic remains the same) ---
-    socket.on('disconnect', () => {
-        const user = userLeave(socket.id);
+    socket.on('disconnect', async () => {
+        const user = await userLeave(socket.id);
         if (user) {
             io.to(user.room).emit('message', formatMessage(botname, `${user.username} has left the chat`));
             io.to(user.room).emit('roomUsers', {
                 room: user.room,
-                users: getRoomUsers(user.room)
+                users: await getRoomUsers(user.room)
             });
-            io.emit('allUsers', getAllUsers());
-            broadcastRoomList(socket);
+            io.emit('allUsers', await getAllUsers());
+            await broadcastRoomList(socket);
         }
     });
 })
