@@ -1,32 +1,3 @@
-const joinForm = document.getElementById('join-form');
-const usernameInput = document.getElementById('username');
-const errorEl = document.getElementById('error-message');
-
-joinForm.addEventListener('submit', async (e) => {
-    e.preventDefault(); // Stop the form from submitting normally
-    
-    const username = usernameInput.value.trim();
-    if (!username) {
-        errorEl.textContent = 'Username cannot be empty';
-        return;
-    }
-    errorEl.textContent = '';
-    try {
-        const r = await fetch('/api/username/validate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-        });
-        const body = await r.json();
-        if (!r.ok) {
-            errorEl.textContent = body.message || 'Validation failed';
-            return;
-        }
-        // go to lobby on success
-        window.location.href = `chat.html?username=${encodeURIComponent(username)}`;
-    } catch (err) {
-        errorEl.textContent = 'Network error';
-    }
 // public/js/login.js
 
 // Tab switching
@@ -71,42 +42,44 @@ togglePasswordIcons.forEach(icon => {
     });
 });
 
-// Login form handler - uses localStorage (no database needed)
-loginForm.addEventListener('submit', (e) => {
+// Login form handler - uses database
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const username = document.getElementById('login-username').value;
+    const username = document.getElementById('login-username').value.trim();
     const password = document.getElementById('login-password').value;
     const errorEl = document.getElementById('login-error');
     
     errorEl.textContent = '';
     
-    // Get registered users from localStorage
-    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    
-    // Find user
-    const user = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-    
-    if (!user) {
-        errorEl.textContent = 'Username not found. Please sign up first.';
-        return;
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            errorEl.textContent = data.message || 'Login failed';
+            return;
+        }
+        
+        // Login successful
+        localStorage.setItem('currentUser', username);
+        window.location.href = `chat.html?username=${encodeURIComponent(username)}`;
+    } catch (error) {
+        errorEl.textContent = 'Network error. Please try again.';
+        console.error('Login error:', error);
     }
-    
-    if (user.password !== password) {
-        errorEl.textContent = 'Incorrect password';
-        return;
-    }
-    
-    // Login successful
-    localStorage.setItem('currentUser', username);
-    window.location.href = `chat.html?username=${username}`;
 });
 
-// Signup form handler - stores in localStorage (no database needed)
-signupForm.addEventListener('submit', (e) => {
+// Signup form handler - stores in database
+signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    const username = document.getElementById('signup-username').value;
+    const username = document.getElementById('signup-username').value.trim();
     const password = document.getElementById('signup-password').value;
     const confirmPassword = document.getElementById('signup-confirm-password').value;
     const errorEl = document.getElementById('signup-error');
@@ -125,26 +98,25 @@ signupForm.addEventListener('submit', (e) => {
         return;
     }
     
-    // Get existing users
-    const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
-    
-    // Check if username already exists
-    if (users.find(u => u.username.toLowerCase() === username.toLowerCase())) {
-        errorEl.textContent = 'Username already taken';
-        return;
+    try {
+        const response = await fetch('/api/auth/signup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            errorEl.textContent = data.message || 'Signup failed';
+            return;
+        }
+        
+        // Auto login after signup
+        localStorage.setItem('currentUser', username);
+        window.location.href = `chat.html?username=${encodeURIComponent(username)}`;
+    } catch (error) {
+        errorEl.textContent = 'Network error. Please try again.';
+        console.error('Signup error:', error);
     }
-    
-    
-    // Add new user
-    users.push({
-        username: username,
-        password: password // NOTE: In production, this should be hashed!
-    });
-    
-    // Save to localStorage
-    localStorage.setItem('registeredUsers', JSON.stringify(users));
-    
-    // Auto login after signup
-    localStorage.setItem('currentUser', username);
-    window.location.href = `chat.html?username=${username}`;
 });

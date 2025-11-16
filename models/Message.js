@@ -6,6 +6,6 @@ const MessageSchema = new mongoose.Schema({
   username: { type: String, required: true },
   text: { type: String, required: true },
   type: { type: String, enum: ['public','dm'], required: true },
-  createdAt: { type: String, default: moment().format('hh:mm a'), index: true }
+  createdAt: { type: String, default: moment().format('hh:mm'), index: true }
 });
 module.exports = mongoose.model('Message', MessageSchema);

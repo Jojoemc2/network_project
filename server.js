@@ -2,6 +2,7 @@ const path = require('path');
 const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
+const bcrypt = require('bcrypt');
 const formatMessage = require('./utils/messages');
 const connectDB = require('./utils/db');
 const Message = require('./models/Message');
@@ -35,6 +36,76 @@ const io = socketio(server);
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
+// Login endpoint
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        
+        if (!username || !password) {
+            return res.status(400).json({ ok: false, message: 'Username and password are required' });
+        }
+        
+        // Find user in database
+        const user = await User.findOne({ username: username });
+        
+        if (!user) {
+            return res.status(401).json({ ok: false, message: 'Username not found. Please sign up first.' });
+        }
+        
+        // Check password using bcrypt
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ ok: false, message: 'Incorrect password' });
+        }
+        
+        return res.json({ ok: true, username: user.username });
+    } catch (error) {
+        console.error('Login error:', error);
+        return res.status(500).json({ ok: false, message: 'Server error' });
+    }
+});
+
+// Signup endpoint
+app.post('/api/auth/signup', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        
+        if (!username || !password) {
+            return res.status(400).json({ ok: false, message: 'Username and password are required' });
+        }
+        
+        // Validate password length
+        if (password.length < 6) {
+            return res.status(400).json({ ok: false, message: 'Password must be at least 6 characters' });
+        }
+        
+        // Check if username already exists
+        const existingUser = await User.findOne({ username: username });
+        if (existingUser) {
+            return res.status(409).json({ ok: false, message: 'Username already taken' });
+        }
+        
+        // Hash password before storing
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        
+        // Create new user with hashed password
+        const newUser = new User({
+            username: username,
+            password: hashedPassword,
+            online: false
+        });
+        
+        await newUser.save();
+        
+        return res.json({ ok: true, username: newUser.username });
+    } catch (error) {
+        console.error('Signup error:', error);
+        return res.status(500).json({ ok: false, message: 'Server error' });
+    }
+});
+
 app.post('/api/username/validate', async (req, res) => {
     const { username } = req.body;
     if (!username) {
