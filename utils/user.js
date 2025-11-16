@@ -80,10 +80,11 @@ async function getRoomData() {
 }
 
 async function userChangeRoom(id, newRoom) {
-    const user = await getCurrentUser(id);
-    if (user) {
-        user.room = newRoom;
-    }
+    const user = await User.findOneAndUpdate(
+        { socketId: id },
+        { $set: { room: newRoom } },
+        { new: true, lean: true }
+    );
     return user;
 }
 

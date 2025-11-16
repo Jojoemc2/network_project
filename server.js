@@ -65,7 +65,7 @@ io.on('connection', socket => {
         socket.emit('chatHistory', history.map(m => ({
             username: m.username,
             text: m.text,
-            time: formatTime(m.createdAt), // use your formatMessage/time formatter
+            time: m.createdAt,
             type: m.type
         })));
 
@@ -102,22 +102,22 @@ io.on('connection', socket => {
             });
         }
         
-        await userChangeRoom(socket.id, roomName);
+        const updatedUser = await userChangeRoom(socket.id, roomName);
         socket.join(roomName);
-        
+
         // Fetch recent history (last 30 messages)
-        const history = await Message.find({ room: user.room }).sort({ createdAt: 1 }).limit(30).lean();
+        const history = await Message.find({ room: roomName }).sort({ createdAt: 1 }).limit(30).lean();
         socket.emit('chatHistory', history.map(m => ({
             username: m.username,
             text: m.text,
-            time: formatTime(m.createdAt), // use your formatMessage/time formatter
+            time: m.createdAt,
             type: m.type
         })));
-        
+
         socket.emit('message', formatMessage(botname, `Welcome to ${roomName}!`));
         socket.broadcast
             .to(roomName)
-            .emit('message', formatMessage(botname, `${user.username} has joined the chat`));
+            .emit('message', formatMessage(botname, `${updatedUser.username} has joined the chat`));
         io.to(roomName).emit('roomUsers', {
             room: roomName,
             users: await getRoomUsers(roomName)
