@@ -18,7 +18,8 @@ const {
     addRoom,
     getPublicRooms,
     getRoomData,
-    userChangeRoom // --- Make sure this is imported ---
+    userChangeRoom,
+    cleanupEmptyRoom
 } = require('./utils/user');
 
 require('dotenv').config();
@@ -118,7 +119,7 @@ app.post('/api/username/validate', async (req, res) => {
     return res.json({ ok: true });
 });
 
-const botname = 'ChatCord Bot';
+const botname = 'Teak Bot';
 // --- ADDED: Store for chat history ---
 // const chatHistory = {}; // { roomName: [message1, message2] }
 
@@ -152,7 +153,7 @@ io.on('connection', socket => {
             type: m.type
         })));
 
-        socket.emit('message', formatMessage(botname, 'Welcome to the ChatCord Lobby!'));
+        socket.emit('message', formatMessage(botname, 'Welcome to the Lobby!'));
         socket.broadcast
             .to(user.room)
             .emit('message', formatMessage(botname, `${user.username} has joined the lobby`));
@@ -183,6 +184,9 @@ io.on('connection', socket => {
                 room: oldRoom,
                 users: await getRoomUsers(oldRoom)
             });
+            
+            // Cleanup empty room after user leaves (exclude current user)
+            await cleanupEmptyRoom(oldRoom, socket.id);
         }
         
         const updatedUser = await userChangeRoom(socket.id, roomName);
@@ -239,12 +243,17 @@ io.on('connection', socket => {
     socket.on('disconnect', async () => {
         const user = await userLeave(socket.id);
         if (user) {
-            io.to(user.room).emit('message', formatMessage(botname, `${user.username} has left the chat`));
-            io.to(user.room).emit('roomUsers', {
-                room: user.room,
-                users: await getRoomUsers(user.room)
+            const room = user.room;
+            io.to(room).emit('message', formatMessage(botname, `${user.username} has left the chat`));
+            io.to(room).emit('roomUsers', {
+                room: room,
+                users: await getRoomUsers(room)
             });
             io.emit('allUsers', await getAllUsers());
+            
+            // Cleanup empty room after user disconnects (exclude current user)
+            await cleanupEmptyRoom(room, socket.id);
+            
             await broadcastRoomList(socket);
         }
     });

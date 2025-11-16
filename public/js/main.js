@@ -116,7 +116,7 @@ function outputMessage(message) {
     // --- ADDED: Alignment Logic ---
     // Note: 'botname' is not defined here, so we must check
     // if the username is 'ChatCord Bot' (from server.js)
-    if (message.username === 'ChatCord Bot') {
+    if (message.username === 'Teak Bot') {
         div.classList.add('bot-message');
     } else if (message.username === username) {
         div.classList.add('my-message');

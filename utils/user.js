@@ -94,6 +94,44 @@ async function userChangeRoom(id, newRoom) {
     return user;
 }
 
+async function cleanupEmptyRoom(roomName, excludeSocketId = null) {
+    // Don't delete Lobby
+    if (roomName === 'Lobby') {
+        return;
+    }
+    
+    // Check if room has any users - query database directly
+    // Exclude the user who just left (by socketId)
+    const query = { room: roomName, online: true };
+    if (excludeSocketId) {
+        query.socketId = { $ne: excludeSocketId };
+    }
+    const usersInRoom = await User.countDocuments(query);
+    
+    
+    if (usersInRoom === 0) {
+        // Check if room is private (DM rooms or private rooms)
+        const roomDoc = await Room.findOne({ name: roomName });
+        const isPrivateRoom = (roomDoc && roomDoc.isPrivate) || roomName.startsWith('dm-');
+        
+        // Don't delete private rooms
+        if (isPrivateRoom) {
+            return;
+        }
+        
+        // Delete the room from database (only public rooms)
+        const deletedRoom = await Room.findOneAndDelete({ name: roomName });
+        
+        // Delete all messages in this room
+        const Message = require('../models/Message');
+        const deletedMessages = await Message.deleteMany({ room: roomName });
+        
+        
+    } else {
+        
+    }
+}
+
 module.exports = {
     userJoin,
     getCurrentUser,
@@ -104,5 +142,6 @@ module.exports = {
     addRoom,            
     getPublicRooms,
     getRoomData,
-    userChangeRoom      
+    userChangeRoom,
+    cleanupEmptyRoom
 }
