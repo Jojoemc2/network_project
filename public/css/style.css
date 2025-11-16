@@ -159,7 +159,8 @@ a {
 	margin-bottom: 5px;
 }
 
-.join-main input[type='text'] {
+.join-main input[type='text'],
+.join-main input[type='password'] {
 	font-size: 16px;
 	padding: 5px;
 	height: 40px;
@@ -176,6 +177,77 @@ a {
 .join-main .btn {
 	margin-top: 20px;
 	width: 100%;
+}
+
+/* Tab Navigation */
+.tab-container {
+	display: flex;
+	margin-bottom: 25px;
+	border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.tab-btn {
+	flex: 1;
+	padding: 12px;
+	background: transparent;
+	color: rgba(255, 255, 255, 0.6);
+	border: none;
+	border-bottom: 3px solid transparent;
+	cursor: pointer;
+	font-size: 16px;
+	font-weight: bold;
+	transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+	color: rgba(255, 255, 255, 0.9);
+}
+
+.tab-btn.active {
+	color: #fff;
+	border-bottom-color: var(--light-color);
+}
+
+/* Auth Forms */
+.auth-form {
+	display: none;
+}
+
+.auth-form.active {
+	display: block;
+}
+
+.error-message {
+	color: #ff6b6b;
+	text-align: center;
+	margin-top: 10px;
+	min-height: 20px;
+	font-size: 14px;
+}
+
+/* Password Toggle */
+.password-wrapper {
+	position: relative;
+	width: 100%;
+}
+
+.password-wrapper input {
+	padding-right: 40px;
+}
+
+.toggle-password {
+	position: absolute;
+	right: 12px;
+	top: 50%;
+	transform: translateY(-50%);
+	cursor: pointer;
+	color: #666;
+	font-size: 18px;
+	transition: color 0.3s ease;
+}
+
+.toggle-password:hover {
+	color: #333;
 }
 
 @media (max-width: 700px) {
