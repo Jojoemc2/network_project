@@ -4,18 +4,25 @@ const User = require('../models/User');
 const Room = require('../models/Room');
 
 async function userJoin(socketId, username, room = 'Lobby') {
-    // If user already exists, update socketId and room.
-    let user = await User.findOne({ username });
-    if (user) {
-        user.socketId = socketId;
-        user.room = room;
-        user.online = true;
-        user.lastSeen = new Date();
-        await user.save();
-    } else {
-        user = await User.create({ username, socketId, room, online: true });
+  const user = await User.findOneAndUpdate(
+    { username }, // find by username
+    {
+      $set: {
+        socketId,
+        room,
+        online: true,
+        lastSeen: new Date()
+      }
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+      runValidators: true,
+      lean: true
     }
-    return user.toObject();
+  );
+  return user;
 }
 
 async function getCurrentUser(socketId) {
@@ -23,13 +30,12 @@ async function getCurrentUser(socketId) {
 }
 
 async function userLeave(socketId) {
-    const user = await User.findOne({ socketId });
-    if (!user) return null;
-    user.socketId = null;
-    user.online = false;
-    user.lastSeen = new Date();
-    await user.save();
-    return user.toObject();
+    const user = await User.findOneAndUpdate(
+    { socketId },
+    { $set: { socketId: null, online: false, lastSeen: new Date() } },
+    { new: true, lean: true }
+    );
+    return user;
 }
 
 async function getRoomUsers(room) {
@@ -45,7 +51,7 @@ async function getAllUsers() {
 
 async function getUserByUsername(username) {
     if (!username) return null;
-    return User.findOne({ username, online: true }).lean();
+    return User.findOne({ username }).lean();
 }
 
 async function addRoom(name, isPrivate = false) {

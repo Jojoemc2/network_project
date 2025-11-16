@@ -51,7 +51,7 @@ io.on('connection', socket => {
     // Handles user validation and joining the lobby
     socket.on('joinLobby', async ({ username }) => {
         const existingUser = await getUserByUsername(username); 
-        if (existingUser) {
+        if (existingUser && existingUser.online) {
             socket.emit('joinError', 'This username is already taken. Please choose another.');
             return;
         }
