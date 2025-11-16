@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: socket_group_32
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install
+    startCommand: npm start
+    branch: master
+    healthCheckPath: /
+    autoDeploy: true
