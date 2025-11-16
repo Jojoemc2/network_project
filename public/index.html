@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<meta charset="UTF-R" />
+		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
 		<link
@@ -19,20 +19,76 @@
 				<h1><i class="fas fa-smile"></i> ChatCord</h1>
 			</header>
 			<main class="join-main">
-				<form id="join-form">
+				<!-- Tab Navigation -->
+				<div class="tab-container">
+					<button class="tab-btn active" data-tab="login">Login</button>
+					<button class="tab-btn" data-tab="signup">Sign Up</button>
+				</div>
+
+				<!-- Login Form -->
+				<form id="login-form" class="auth-form active">
 					<div class="form-control">
-						<label for="username">Username</label>
+						<label for="login-username">Username</label>
 						<input
 							type="text"
-							name="username"
-							id="username"
+							id="login-username"
 							placeholder="Enter username..."
 							required
 						/>
 					</div>
-					<p id="error-message" style="color: #c0392b; text-align: center;"></p>
-					
-					<button type="submit" class="btn">Join Lobby</button>
+					<div class="form-control">
+						<label for="login-password">Password</label>
+						<div class="password-wrapper">
+							<input
+								type="password"
+								id="login-password"
+								placeholder="Enter password..."
+								required
+							/>
+							<i class="fas fa-eye-slash toggle-password" data-target="login-password"></i>
+						</div>
+					</div>
+					<p id="login-error" class="error-message"></p>
+					<button type="submit" class="btn">Login</button>
+				</form>
+
+				<!-- Signup Form -->
+				<form id="signup-form" class="auth-form">
+					<div class="form-control">
+						<label for="signup-username">Username</label>
+						<input
+							type="text"
+							id="signup-username"
+							placeholder="Choose a username..."
+							required
+						/>
+					</div>
+					<div class="form-control">
+						<label for="signup-password">Password</label>
+						<div class="password-wrapper">
+							<input
+								type="password"
+								id="signup-password"
+								placeholder="Create password..."
+								required
+							/>
+							<i class="fas fa-eye-slash toggle-password" data-target="signup-password"></i>
+						</div>
+					</div>
+					<div class="form-control">
+						<label for="signup-confirm-password">Confirm Password</label>
+						<div class="password-wrapper">
+							<input
+								type="password"
+								id="signup-confirm-password"
+								placeholder="Confirm password..."
+								required
+							/>
+							<i class="fas fa-eye-slash toggle-password" data-target="signup-confirm-password"></i>
+						</div>
+					</div>
+					<p id="signup-error" class="error-message"></p>
+					<button type="submit" class="btn">Sign Up</button>
 				</form>
 			</main>
 		</div>

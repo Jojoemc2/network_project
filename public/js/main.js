@@ -176,9 +176,16 @@ function outputRoomList(rooms) {
 }
 
 function outputAllUsers(users) {
-    allUserList.innerHTML = users.map(user => {
+    // Sort users to show current user first
+    const sortedUsers = [...users].sort((a, b) => {
+        if (a.username === username) return -1;
+        if (b.username === username) return 1;
+        return 0;
+    });
+    
+    allUserList.innerHTML = sortedUsers.map(user => {
         const notiBadge = dmNotifications[user.username] 
-            ? '<span class="noti-badge"> (1)</span>' 
+            ? '<span class="noti-badge">1</span>' 
             : '';
             
         return `

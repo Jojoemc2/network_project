@@ -5,77 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk-" crossorigin="anonymous" />
   <link rel="stylesheet" href="css/style.css">
-  
-  <style>
-    /* --- ADDED: Chat Alignment --- */
-    .chat-messages {
-        display: flex;
-        flex-direction: column;
-    }
-    .message {
-        max-width: 80%; /* Messages don't span the whole width */
-        word-wrap: break-word; /* Wrap long words */
-        margin-bottom: 10px; /* Spacing between messages */
-    }
-    .message.my-message {
-        align-self: flex-end;
-        background-color: #dcf8c6; /* Light green, like WhatsApp */
-    }
-    .message.other-message {
-        align-self: flex-start;
-        background-color: #fff; /* Plain white */
-        border: 1px solid #eee; /* Subtle border */
-    }
-    .message.bot-message {
-        align-self: center;
-        width: 90%;
-        text-align: center;
-        background-color: #f0f0f0;
-        font-style: italic;
-        color: #555;
-    }
-    /* --- END Chat Alignment --- */
-
-
-    /* R7: Styles for DM messages */
-    /* MODIFIED: Combine with alignment */
-    .message.dm.other-message { 
-        background-color: #fdfaf6; 
-        border-left: 5px solid #777; 
-        padding-left: 10px; 
-    }
-    .message.dm.my-message { 
-        background-color: #e7ffd6; /* Slightly different green for DM */
-        border-right: 5px solid #5c913b; /* Border on the right */
-        padding-right: 10px;
-    }
-    .message.dm .meta .private-note { 
-        color: #888; 
-        font-style: italic; 
-        margin-right: 5px; 
-    }
-
-
-    /* R9: Styles for Room List with Members */
-    #room-list li { padding: 3px 0; cursor: pointer; }
-    #room-list li:hover { background: #ddd; }
-    #room-list li ul { list-style-type: none; padding-left: 20px; font-size: 0.9em; color: #555; }
-    #room-list li ul li { cursor: default; }
-    #room-list li ul li:hover { background: none; }
-
-    /* Make list items clickable */
-    #all-users li { cursor: pointer; padding: 3px 0; }
-    #all-users li:hover { background: #ddd; }
-    
-    .noti-badge {
-        color: #c0392b;
-        font-weight: bold;
-    }
-
-    /* Style for the new form */
-    .chat-sidebar form { padding: 10px 15px; }
-    .chat-sidebar input { width: 100%; padding: 5px; border: none; border-radius: 5px; }
-  </style>
 
   <title>ChatCord App</title>
 </head>
@@ -83,7 +12,7 @@
   <div class="chat-container">
     <header class="chat-header">
       <h1><i class="fas fa-smile"></i> ChatCord</h1>
-      <a href="index.html" class="btn">Leave Chat</a>
+      <a href="index.html" class="btn">Logout</a>
     </header>
     <main class="chat-main">
       <div class="chat-sidebar">
@@ -94,15 +23,18 @@
         <h3><i class="fas fa-users"></i> Users (in Room)</h3>
         <ul id="room-users"></ul>
 
-        <h3><i class="fas fa-plus"></i> Create Room</h3>
+        <h3><i class="fas fa-plus-circle"></i> Create New Room</h3>
         <form id="create-room-form">
           <input
             id="room-name-input"
             type="text"
-            placeholder="Enter new room name..."
+            placeholder="Enter room name..."
             required
             autocomplete="off"
           />
+          <button type="submit" class="create-room-btn">
+            <i class="fas fa-plus"></i> Create Room
+          </button>
         </form>
 
         <h3><i class="fas fa-door-open"></i> Available Rooms</h3>
