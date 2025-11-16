@@ -209,6 +209,7 @@ function getDmRoomName(user1, user2) {
 }
 
 socket.on('createSuccess', (newRoomName) => {
+    chatMessages.innerHTML = '';
     socket.emit('joinRoom', newRoomName);   
     createRoomInput.value = '';
 });
