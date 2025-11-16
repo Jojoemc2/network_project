@@ -34,6 +34,18 @@ const io = socketio(server);
 
 // Set static folder
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.post('/api/username/validate', async (req, res) => {
+    const { username } = req.body;
+    if (!username) {
+        return res.status(400).json({ ok: false, message: 'Missing username' });
+    }
+    const existing = await getUserByUsername(username);
+    if (existing && existing.online) {
+        return res.status(409).json({ ok: false, message: 'Username taken' });
+    }
+    return res.json({ ok: true });
+});
 
 const botname = 'ChatCord Bot';
 // --- ADDED: Store for chat history ---

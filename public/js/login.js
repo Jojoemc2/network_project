@@ -1,21 +1,31 @@
-// public/js/login.js
-
-const socket = io();
 const joinForm = document.getElementById('join-form');
 const usernameInput = document.getElementById('username');
 const errorEl = document.getElementById('error-message');
 
-joinForm.addEventListener('submit', (e) => {
+joinForm.addEventListener('submit', async (e) => {
     e.preventDefault(); // Stop the form from submitting normally
     
-    const username = usernameInput.value;
-    
-    if (username) {
-        // Clear any previous errors
-        errorEl.textContent = '';
-        
-        // R3: Emit the 'joinLobby' event to the server for validation
-        socket.emit('joinLobby', { username });
+    const username = usernameInput.value.trim();
+    if (!username) {
+        errorEl.textContent = 'Username cannot be empty';
+        return;
+    }
+    errorEl.textContent = '';
+    try {
+        const r = await fetch('/api/username/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        });
+        const body = await r.json();
+        if (!r.ok) {
+            errorEl.textContent = body.message || 'Validation failed';
+            return;
+        }
+        // go to lobby on success
+        window.location.href = `chat.html?username=${encodeURIComponent(username)}`;
+    } catch (err) {
+        errorEl.textContent = 'Network error';
     }
 });
 

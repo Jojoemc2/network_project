@@ -56,7 +56,7 @@ async function getUserByUsername(username) {
 
 async function addRoom(name, isPrivate = false) {
     // Avoid adding 'Lobby' as a creatable room
-    if (name.toLowerCase() !== 'lobby') {
+    if (name.toLowerCase().trim() !== 'lobby') {
         await Room.findOneAndUpdate({ name }, { name, isPrivate }, { upsert: true });
     }
 }
