@@ -17,8 +17,6 @@ const { username } = Qs.parse(location.search, {
     ignoreQueryPrefix: true
 });
 
-// User joins the lobby
-socket.emit('joinLobby', { username });
 
 // Listen for chat history
 socket.on('chatHistory', (messages) => {
@@ -214,3 +212,6 @@ socket.on('joinSuccess', (joinedUsername) => {
 socket.on('joinError', (errorMessage) => {
     console.error(errorMessage);
 });
+
+// request to join the lobby
+socket.emit('joinLobby', { username });

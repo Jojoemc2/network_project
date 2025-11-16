@@ -1,74 +1,96 @@
-const users = [];
+const User = require('../models/User');
 // R8: This Set stores the user-created group chats
 // --- CHANGED: Default groups are now removed ---
-const rooms = new Set();
+const Room = require('../models/Room');
 
-function userJoin(id, username , room){
-    const user = {id, username , room};
-    users.push(user);
+async function userJoin(socketId, username, room = 'Lobby') {
+  const user = await User.findOneAndUpdate(
+    { username }, // find by username
+    {
+      $set: {
+        socketId,
+        room,
+        online: true,
+        lastSeen: new Date()
+      }
+    },
+    {
+      new: true,
+      upsert: true,
+      setDefaultsOnInsert: true,
+      runValidators: true,
+      lean: true
+    }
+  );
+  return user;
+}
+
+async function getCurrentUser(socketId) {
+    return User.findOne({ socketId }).lean();
+}
+
+async function userLeave(socketId) {
+    const user = await User.findOneAndUpdate(
+    { socketId },
+    { $set: { socketId: null, online: false, lastSeen: new Date() } },
+    { new: true, lean: true }
+    );
     return user;
 }
 
-function getCurrentUser(id){
-    return users.find(user => user.id === id);
+async function getRoomUsers(room) {
+    const users = await User.find({ room, online: true }).lean();
+    // Return array of { username } of online users in the room
+    return users.map(u => ({ username: u.username }));
 }
 
-function userLeave(id){
-    const index = users.findIndex(user => user.id === id);
-    if(index !== -1){
-        return users.splice(index, 1)[0];
-    }
+async function getAllUsers() {
+    const users = await User.find({ online: true }).lean();
+    return users.map(u => ({ username: u.username }));
 }
 
-function getRoomUsers(room){
-    return users.filter(user => user.room === room);
+async function getUserByUsername(username) {
+    if (!username) return null;
+    return User.findOne({ username }).lean();
 }
 
-function getAllUsers(){
-    return users;
-}
-
-function getUserByUsername(username) {
-    if (!username) return undefined;
-    const searchName = username.toLowerCase();
-    return users.find(user => user.username.toLowerCase() === searchName);
-}
-
-function addRoom(roomName) {
+async function addRoom(name, isPrivate = false) {
     // Avoid adding 'Lobby' as a creatable room
-    if (roomName.toLowerCase() !== 'lobby') {
-        rooms.add(roomName);
+    if (name.toLowerCase().trim() !== 'lobby') {
+        await Room.findOneAndUpdate({ name }, { name, isPrivate }, { upsert: true });
     }
 }
 
-function getPublicRooms() {
-    return Array.from(rooms);
+
+async function getPublicRooms() {
+    const rooms = await Room.find({ isPrivate: false }).lean();
+    return rooms;
 }
 
-function getRoomData() {
+async function getRoomData() {
+    const rooms = await Room.find({}).lean();
+
+    // Always include Lobby even if not present in DB
+    const roomNames = new Set(rooms.map(r => r.name));
+    roomNames.add('Lobby');
+
     const allRoomsData = [];
-    
-    // Add Lobby first
-    allRoomsData.push({
-        name: 'Lobby',
-        users: getRoomUsers('Lobby').map(u => u.username)
-    });
-    
-    // Add all other public rooms
-    for (const roomName of rooms) {
+    for (const roomName of roomNames) {
+        const users = await getRoomUsers(roomName);
         allRoomsData.push({
             name: roomName,
-            users: getRoomUsers(roomName).map(u => u.username)
+            users: users.map(u => u.username)
         });
     }
     return allRoomsData;
 }
 
-function userChangeRoom(id, newRoom) {
-    const user = getCurrentUser(id);
-    if (user) {
-        user.room = newRoom;
-    }
+async function userChangeRoom(id, newRoom) {
+    const user = await User.findOneAndUpdate(
+        { socketId: id },
+        { $set: { room: newRoom } },
+        { new: true, lean: true }
+    );
     return user;
 }
 
