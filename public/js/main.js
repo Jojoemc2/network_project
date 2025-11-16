@@ -72,8 +72,6 @@ createRoomForm.addEventListener('submit', (e) => {
     if (newRoomName) {
         chatMessages.innerHTML = '';
         socket.emit('createRoom', newRoomName); 
-        socket.emit('joinRoom', newRoomName);   
-        createRoomInput.value = '';
     }
 });
 
@@ -202,6 +200,11 @@ function getDmRoomName(user1, user2) {
     const names = [user1, user2].sort();
     return `dm-${names[0]}-${names[1]}`;
 }
+
+socket.on('createSuccess', (newRoomName) => {
+    socket.emit('joinRoom', newRoomName);   
+    createRoomInput.value = '';
+});
 
 socket.on('joinSuccess', (joinedUsername) => {
     if (window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/')) {

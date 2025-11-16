@@ -167,14 +167,26 @@ io.on('connection', socket => {
 
     // Listen for new room creation
     socket.on('createRoom', async (roomName) => {
-        await addRoom(roomName);
-        await broadcastRoomList(socket);
+        const newRoomName = await addRoom(roomName);
+        if (newRoomName) {
+            socket.emit('createSuccess', newRoomName);
+            await broadcastRoomList(socket);
+        }
     });
     
     // --- MODIFIED: Listen for user joining a different room ---
     socket.on('joinRoom', async (roomName) => {
         const user = await getCurrentUser(socket.id);
-        if (!user) return; 
+        if (!user) return;
+
+        // Allow joining 'Lobby' and DM rooms even if not in Room collection.
+        if (roomName !== 'Lobby' && !roomName.startsWith('dm-')) {
+            const roomDoc = await Room.findOne({ name: roomName }).lean();
+            if (!roomDoc) {
+                socket.emit('joinError', 'Room does not exist or is invalid.');
+                return;
+            }
+        }
 
         const oldRoom = user.room;
         if (oldRoom) {
