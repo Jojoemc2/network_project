@@ -1,7 +1,7 @@
-const User = require('../models/User');
+const User = require('./mongo_models/User');
 // R8: This Set stores the user-created group chats
 // --- CHANGED: Default groups are now removed ---
-const Room = require('../models/Room');
+const Room = require('./mongo_models/Room');
 
 async function userJoin(socketId, username, room = 'Lobby') {
   const user = await User.findOneAndUpdate(
@@ -124,7 +124,7 @@ async function cleanupEmptyRoom(roomName, excludeSocketId = null) {
         const deletedRoom = await Room.findOneAndDelete({ name: roomName });
         
         // Delete all messages in this room
-        const Message = require('../models/Message');
+        const Message = require('./mongo_models/Message');
         const deletedMessages = await Message.deleteMany({ room: roomName });
         
         

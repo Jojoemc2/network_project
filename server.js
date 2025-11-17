@@ -3,11 +3,11 @@ const http = require('http');
 const express = require('express');
 const socketio = require('socket.io');
 const bcrypt = require('bcrypt');
-const formatMessage = require('./utils/messages');
-const connectDB = require('./utils/db');
-const Message = require('./models/Message');
-const User = require('./models/User');
-const Room = require('./models/Room');
+const Message = require('./backend_utils/mongo_models/Message');
+const User = require('./backend_utils/mongo_models/User');
+const Room = require('./backend_utils/mongo_models/Room');
+const formatMessage = require('./backend_utils/messages');
+const connectDB = require('./backend_utils/db');
 const {
     userJoin,
     getCurrentUser,
@@ -20,7 +20,7 @@ const {
     getRoomData,
     userChangeRoom,
     cleanupEmptyRoom
-} = require('./utils/user');
+} = require('./backend_utils/user');
 
 require('dotenv').config();
 connectDB(process.env.MONGO_URI).catch(err => 
