@@ -6,6 +6,7 @@ There are two ways to access the running web demo:
   - Note: Render may put the service to sleep when it is inactive for a while. If you enter the site while it was put to sleep, Render will re-deploy the app and it may take some time before the site becomes available — please wait for the re-deploy process.
 
 - **Option 2 — Run server locally**: run the server on your device and connect to `http://localhost:3000/` in a browser.
+  - Note: the message timestamp was formatted for the Render-deployed server. If you locally run the server, the timestamp could be incorrectly displyed depend on your time zone.
 
 **Local run (Windows `cmd.exe`)**
 
