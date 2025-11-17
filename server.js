@@ -211,7 +211,7 @@ io.on('connection', socket => {
 
         // Fetch recent history (last 30 messages)
         const history = await Message.aggregate([
-          { $match: { room: user.room } },
+          { $match: { room: updatedUser.room } },
           { $sort: { _id: -1 } },
           { $limit: 30 },
           { $sort: { _id: 1 } }
