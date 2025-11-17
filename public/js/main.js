@@ -222,6 +222,7 @@ socket.on('joinSuccess', (joinedUsername) => {
 
 socket.on('joinError', (errorMessage) => {
     console.error(errorMessage);
+    alert(errorMessage);
 });
 
 // Handle logout button click
