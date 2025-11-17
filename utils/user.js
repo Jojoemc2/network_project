@@ -58,7 +58,7 @@ async function addRoom(name, isPrivate = false) {
     // Avoid adding 'Lobby' as a creatable room
     if (name.toLowerCase().trim() !== 'lobby' && name.toLowerCase().trim() !== '' && !name.toLowerCase().trim().startsWith('dm-')) {
         const newRoom = await Room.findOneAndUpdate({ name }, { name, isPrivate }, { upsert: true, lean: true });
-        return newRoom.name;
+        return name;
     }
 }
 
