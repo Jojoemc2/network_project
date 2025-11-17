@@ -177,6 +177,9 @@ io.on('connection', socket => {
             socket.emit('createSuccess', newRoomName);
             await broadcastRoomList(socket);
         }
+        else {
+            socket.emit('createError', 'Invalid room name. Cannot create room.');
+        }
     });
     
     // --- MODIFIED: Listen for user joining a different room ---

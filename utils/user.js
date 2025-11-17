@@ -60,10 +60,6 @@ async function addRoom(name, isPrivate = false) {
         const newRoom = await Room.findOneAndUpdate({ name }, { name, isPrivate }, { upsert: true, lean: true, new: true });
         return newRoom.name;
     }
-    else {
-        alert('Invalid room name.');
-        return null;
-    }
 }
 
 

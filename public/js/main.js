@@ -214,6 +214,11 @@ socket.on('createSuccess', (newRoomName) => {
     createRoomInput.value = '';
 });
 
+socket.on('createError', (errorMessage) => {
+    console.error(errorMessage);
+    alert(errorMessage);
+});
+
 socket.on('joinSuccess', (joinedUsername) => {
     if (window.location.pathname.endsWith('index.html') || window.location.pathname.endsWith('/')) {
         window.location.href = `chat.html?username=${joinedUsername}`;
