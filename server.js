@@ -145,7 +145,7 @@ io.on('connection', socket => {
         socket.emit('joinSuccess', user.username);
 
         // Fetch recent history (last 30 messages)
-        const history = await Message.find({ room: user.room }).sort({ createdAt: 1 }).limit(30).lean();
+        const history = await Message.find({ room: user.room }).sort({ _id: -1 }).limit(30).lean();
         socket.emit('chatHistory', history.map(m => ({
             username: m.username,
             text: m.text,
@@ -205,7 +205,7 @@ io.on('connection', socket => {
         socket.join(roomName);
 
         // Fetch recent history (last 30 messages)
-        const history = await Message.find({ room: roomName }).sort({ createdAt: 1 }).limit(30).lean();
+        const history = await Message.find({ room: roomName }).sort({ _id: -1 }).limit(30).lean();
         socket.emit('chatHistory', history.map(m => ({
             username: m.username,
             text: m.text,
